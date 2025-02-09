@@ -45,7 +45,7 @@ class Tray(Widget.Box):
     """
     def __init__(self):
         super().__init__(
-            spacing=10,
+            spacing=5,
             setup=lambda self: system_tray.connect(
                 "added",
                 lambda x, item: self.append(tray_item(item))

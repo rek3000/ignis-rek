@@ -51,6 +51,8 @@ class PowerMenu(Widget.Button):
             on_click=self._on_menu_click,
         )
 
+        self.add_css_class("power-menu")
+
     def _on_menu_click(self, _):
         self.menu.popup()
 

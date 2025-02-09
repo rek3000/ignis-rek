@@ -7,6 +7,8 @@ from .title import WindowTitle
 from .audio import Volume, VolumeSlider
 from .power_menu import PowerMenu
 
+from .bar import Bar
+
 __all__ = [
     "NotificationPopup",
     "PriceTracker",
@@ -16,4 +18,5 @@ __all__ = [
     "WindowTitle",
     "Volume",
     "PowerMenu",
+    "Bar"
 ]
