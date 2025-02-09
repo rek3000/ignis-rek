@@ -4,6 +4,7 @@ from .battery import Battery
 from .tray import Tray
 from .workspaces import Workspaces
 from .title import WindowTitle
+from .audio import Volume, VolumeSlider
 
 __all__ = [
     "NotificationPopup",
@@ -12,4 +13,5 @@ __all__ = [
     "Tray",
     "Workspaces",
     "WindowTitle",
+    "Volume",
 ]
