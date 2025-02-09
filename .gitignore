@@ -1,0 +1,57 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+
+# Distribution / packaging
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+dist/
+build/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Local configuration files
+*.local
+*.env
+
+# Logs
+*.log
+
+# Coverage reports
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+
+# Test results
+nosetests.xml
+test-results/
+*.xml
+*.html
+
+# Miscellaneous
+*.DS_Store
+*.egg
+*.egg-info
+*.pdb
+*.pyo
+*.pyd
