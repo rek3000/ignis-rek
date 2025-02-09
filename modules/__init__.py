@@ -5,6 +5,7 @@ from .tray import Tray
 from .workspaces import Workspaces
 from .title import WindowTitle
 from .audio import Volume, VolumeSlider
+from .power_menu import PowerMenu
 
 __all__ = [
     "NotificationPopup",
@@ -14,4 +15,5 @@ __all__ = [
     "Workspaces",
     "WindowTitle",
     "Volume",
+    "PowerMenu",
 ]

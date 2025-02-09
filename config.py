@@ -16,6 +16,7 @@ from modules import (
     WindowTitle,
     Volume,
     VolumeSlider,
+    PowerMenu,
 )
 
 app = IgnisApp.get_default()
@@ -80,51 +81,6 @@ def clock() -> Widget.Label:
         ).bind("output"),
     )
 
-def logout() -> None:
-    Utils.exec_sh_async("hyprctl dispatch exit 0")
-
-
-def power_menu() -> Widget.Button:
-    menu = Widget.PopoverMenu(
-        items=[
-            Widget.MenuItem(
-                label="Lock",
-                on_activate=lambda x: Utils.exec_sh_async("hyprlock"),
-            ),
-            Widget.Separator(),
-            Widget.MenuItem(
-                label="Suspend",
-                on_activate=lambda x: Utils.exec_sh_async("loginctl suspend"),
-            ),
-            Widget.MenuItem(
-                label="Hibernate",
-                on_activate=lambda x: Utils.exec_sh_async("loginctl hibernate"),
-            ),
-            Widget.Separator(),
-            Widget.MenuItem(
-                label="Reboot",
-                on_activate=lambda x: Utils.exec_sh_async("loginctl reboot"),
-            ),
-            Widget.MenuItem(
-                label="Shutdown",
-                on_activate=lambda x: Utils.exec_sh_async("loginctl poweroff"),
-            ),
-            Widget.Separator(),
-            Widget.MenuItem(
-                label="Logout",
-                enabled=hyprland.is_available,
-                on_activate=lambda x: logout(),
-            ),
-        ]
-    )
-    return Widget.Button(
-        child=Widget.Box(
-            child=[Widget.Icon(image="system-shutdown-symbolic", pixel_size=20), menu]
-        ),
-        on_click=lambda x: menu.popup(),
-    )
-
-
 def price_tracker() -> Widget.Box:
     return Widget.Box(
         child=[
@@ -161,7 +117,7 @@ def right() -> Widget.Box:
             Volume(),
             VolumeSlider(),
             clock(),
-            power_menu(),
+            PowerMenu(),
         ],
         spacing=10,
     )
