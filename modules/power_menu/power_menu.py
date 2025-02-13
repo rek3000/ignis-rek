@@ -36,7 +36,7 @@ class PowerMenu(Widget.Button):
                 Widget.MenuItem(
                     label="Logout",
                     enabled=self.hyprland.is_available,
-                    on_activate=partial(self._exec_command, "hyprland dispatch exit 0"),
+                    on_activate=partial(self._exec_command, "hyprctl dispatch exit 0"),
                 ),
             ]
         )

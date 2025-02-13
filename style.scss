@@ -170,6 +170,15 @@ popover.menu {
   border-radius: $b-radius;
   transition: 0.3s;
 
+  button {
+    padding: 0;
+    margin: 0;
+    
+    &:hover {
+      background-color: transparent;
+    }
+  }
+
   &:hover {
     background-color: lighten($bg, 10%);
   }
@@ -193,6 +202,26 @@ popover.menu {
   &.battery-low {
     .battery-icon {
       color: #e06c75; // Red color for low battery
+    }
+  }
+
+  // Performance menu styling
+  popover.menu {
+    contents {
+      background-color: $bg;
+      padding: 0.35rem;
+      border-radius: 1rem;
+
+      modelbutton {
+        transition: 0.3s;
+        border-radius: $b-radius;
+        padding: 0.25rem 1rem;
+        color: $fg;
+
+        &:hover {
+          background-color: mix($bg, $active, 80%);
+        }
+      }
     }
   }
 }

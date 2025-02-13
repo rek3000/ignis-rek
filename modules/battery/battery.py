@@ -1,18 +1,40 @@
 import os
 from typing import Optional
+from functools import partial
 from ignis.widgets import (
     Widget,
     Label,
-    Box
+    Box,
+    PopoverMenu,
+    MenuItem,
+    Button
 )
 from ignis.utils import Utils
 
 class Battery(Widget.Box):
     """
-    A widget that displays battery status and percentage.
+    A widget that displays battery status and percentage with performance mode control.
     """
     
     def __init__(self):
+        # Create performance mode menu
+        self.performance_menu = Widget.PopoverMenu(
+            items=[
+                Widget.MenuItem(
+                    label="Performance",
+                    on_activate=partial(self._set_power_profile, "performance"),
+                ),
+                Widget.MenuItem(
+                    label="Balanced",
+                    on_activate=partial(self._set_power_profile, "balanced"),
+                ),
+                Widget.MenuItem(
+                    label="Power Saver",
+                    on_activate=partial(self._set_power_profile, "power-saver"),
+                ),
+            ]
+        )
+
         # Create UI components first
         self.percentage_text = Label(
             label="",
@@ -32,13 +54,26 @@ class Battery(Widget.Box):
         )
         self.icon_text.add_css_class("battery-icon")
         
+        # Create a button to contain everything
+        self.button = Widget.Button(
+            child=Widget.Box(
+                vertical=False,
+                spacing=0,
+                child=[
+                    self.icon_text,
+                    self.percentage_text,
+                ]
+            ),
+            on_click=self._on_click
+        )
+        
         # Initialize parent with children
         super().__init__(
             vertical=False,
             spacing=0,
             child=[
-                self.icon_text,
-                self.percentage_text
+                self.button,
+                self.performance_menu,
             ]
         )
         
@@ -102,6 +137,17 @@ class Battery(Widget.Box):
             else:
                 return "󰁹"  # full
     
+    def _set_power_profile(self, profile, _):
+        """Set the power profile using powerprofilesctl."""
+        try:
+            Utils.exec_sh_async(f"powerprofilesctl set {profile}")
+        except Exception as e:
+            print(f"Error setting power profile: {e}")
+
+    def _on_click(self, _):
+        """Show the performance mode menu when clicked."""
+        self.performance_menu.popup()
+
     def _update_battery(self, poll_instance=None):
         """Update the battery display."""
         try:
