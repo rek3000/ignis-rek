@@ -13,6 +13,7 @@ from modules import (
     Volume,
     VolumeSlider,
     PowerMenu,
+    NotificationIcon,
 )
 
 mpris = MprisService.get_default()
@@ -106,6 +107,7 @@ def right() -> Widget.Box:
             Battery(),
             Volume(),
             VolumeSlider(),
+            NotificationIcon(),
             clock(),
             PowerMenu(),
         ],

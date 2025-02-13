@@ -6,6 +6,8 @@ from .workspaces import Workspaces
 from .title import WindowTitle
 from .audio import Volume, VolumeSlider
 from .power_menu import PowerMenu
+from .control_center import ControlCenter
+from .control_center.notification_icon import NotificationIcon
 
 from .bar import Bar
 
@@ -17,6 +19,9 @@ __all__ = [
     "Workspaces",
     "WindowTitle",
     "Volume",
+    "VolumeSlider",
     "PowerMenu",
-    "Bar"
+    "Bar",
+    "ControlCenter",
+    "NotificationIcon",
 ]
