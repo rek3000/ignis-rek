@@ -13,6 +13,7 @@ from modules import (
     WindowTitle,
     Volume,
     VolumeSlider,
+    VolumeRevealer,
     PowerMenu,
     NotificationIcon,
 )
@@ -52,17 +53,6 @@ def media() -> Widget.Box:
         ),
     )
 
-
-# def current_notification() -> Widget.Label:
-#     return Widget.Label(
-#         ellipsize="end",
-#         max_width_chars=60,
-#         label=notifications.bind(
-#             "notifications", lambda value: value[-1].summary if len(value) > 0 else None
-#         ),
-#     )
-#
-
 def clock() -> Widget.Label:
     # poll for current time every second
     return Widget.Label(
@@ -92,9 +82,7 @@ def left(monitor_name: str) -> Widget.Box:
 def center() -> Widget.Box:
     return Widget.Box(
         child=[
-            # current_notification(),
             Widget.Separator(vertical=True, css_classes=["middle-separator"]),
-            # media(),
         ],
         spacing=10,
     )
@@ -112,8 +100,9 @@ async def right() -> Widget.Box:
             # price_tracker(),
             tray_widget,
             battery_widget,
-            Volume(),
-            VolumeSlider(),
+            # Volume(),
+            # VolumeSlider(),
+            VolumeRevealer(),
             NotificationIcon(),
             clock(),
             PowerMenu(),
@@ -132,7 +121,7 @@ class Bar(Widget.Window):
         super().__init__(
             namespace=f"ignis_bar_{monitor_id}",
             monitor=monitor_id,
-            anchor=["left", "top", "right"],
+            anchor=["left", "bottom", "right"],
             exclusivity="exclusive",
             child=Widget.CenterBox(
                 css_classes=["bar"],

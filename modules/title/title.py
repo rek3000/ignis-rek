@@ -19,7 +19,7 @@ class WindowTitle(Widget.Label):
         # Initialize parent with common properties
         super().__init__(
             ellipsize="end",
-            max_width_chars=40
+            max_width_chars=80
         )
         
         # Set up window manager specific bindings

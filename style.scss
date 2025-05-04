@@ -17,8 +17,8 @@ $b-width: 0.2rem;
 
 .bar {
   padding: 0.2rem 1rem;
-  margin:0.2rem 0.2rem;
-  border-radius: $b-radius;
+  margin:0.2rem 0rem 0 0rem;
+  border-radius: $b-radius $b-radius 0 0;
   background-color: $bg;
   color: $fg;
 }

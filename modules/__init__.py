@@ -4,7 +4,7 @@ from .battery import Battery
 from .tray import Tray
 from .workspaces import Workspaces
 from .title import WindowTitle
-from .audio import Volume, VolumeSlider
+from .audio import Volume, VolumeSlider, VolumeRevealer
 from .power_menu import PowerMenu
 from .control_center import ControlCenter
 from .control_center.notification_icon import NotificationIcon
@@ -20,6 +20,7 @@ __all__ = [
     "WindowTitle",
     "Volume",
     "VolumeSlider",
+    "VolumeRevealer",
     "PowerMenu",
     "Bar",
     "ControlCenter",
