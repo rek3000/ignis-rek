@@ -3,67 +3,117 @@ from ignis.services.system_tray import SystemTrayItem, SystemTrayService
 
 import asyncio
 from typing import Optional
+import gi
+gi.require_version('Gdk', '4.0')
+gi.require_version('Gtk', '4.0')
+from gi.repository import Gdk, Gtk, GLib
 
 system_tray = SystemTrayService.get_default()
 
-def tray_item(item: SystemTrayItem) -> Widget.Button:
+class TrayItemButton(Widget.Button):
     """
-    Create a button widget for a system tray item.
+    A button widget representing a system tray item.
     
     Args:
         item: The system tray item to create a widget for
-        
-    Returns:
-        A Button widget representing the system tray item
     """
-    # Create menu if available
-    menu = item.menu.copy() if item.menu else None
-    
-    # Create the button widget
-    button = Widget.Button(
-        child=Widget.Box(
+    def __init__(self, item: SystemTrayItem):
+        self.item = item
+        self._icon = Widget.Icon(
+            image=item.bind("icon"),
+            pixel_size=24
+        )
+        
+        # Create menu if available
+        self._menu = None
+        if item.menu:
+            self._menu = item.menu.copy()
+        
+        # Create a box that contains both the icon and the menu
+        # This ensures they're in the same container hierarchy
+        self._box = Widget.Box(
             child=[
-                Widget.Icon(
-                    image=item.bind("icon"),
-                    pixel_size=24
-                ),
-                menu
+                self._icon,
+                self._menu if self._menu else None
             ]
-        ),
-        setup=lambda self: item.connect(
-            "removed",
-            lambda x: self.unparent()
-        ),
-        tooltip_text=item.bind("tooltip"),
-        on_click=lambda x: item.activate(),  # Left-click: activate or show menu
-        on_right_click=lambda x: menu.popup() if menu else None,
-        css_classes=["tray-item"]
-    )
+        )
+        
+        # Initialize the button
+        super().__init__(
+            child=self._box,
+            tooltip_text=item.bind("tooltip"),
+            on_click=self._on_click,
+            on_right_click=self._on_right_click if item.menu else None,
+            css_classes=["tray-item"]
+        )
+        
+        # Connect to the removed signal
+        item.connect("removed", self._on_removed)
     
-    return button
+    def _on_removed(self, _):
+        # Clean up when the item is removed
+        if self._icon.get_parent():
+            self._icon.unparent()
+        
+        if self._menu and self._menu.get_parent():
+            self._menu.unparent()
+        
+        if self._box.get_parent():
+            self._box.unparent()
+            
+        # Finally unparent self
+        self.unparent()
+    
+    def _on_click(self, _):
+        # Use async version of activate
+        asyncio.create_task(self.item.activate_async())
+    
+    def _on_right_click(self, _):
+        """
+        Handle right-click events by showing the menu.
+        """
+        if self._menu:
+            # Since the menu is already in the same container, we can just call popup()
+            self._menu.popup()
 
 class TrayItem(Widget.Button):
     """
+    A button widget representing a system tray item.
     """
     __gtype_name__ = "TrayItem"
 
     def __init__(self, item: SystemTrayItem):
         self.item = item
-        self._menu = item.menu.copy() if item.menu else None
+        
+        # Create icon widget
+        self._icon = Widget.Icon(
+            image=item.bind("icon"),
+            pixel_size=24
+        )
+        
+        # Create menu if available
+        self._menu = None
+        if item.menu:
+            self._menu = item.menu.copy()
+        
+        # Create a box that contains both the icon and the menu
+        # This ensures they're in the same container hierarchy
+        self._box = Widget.Box(
+            child=[
+                self._icon,
+                self._menu if self._menu else None
+            ]
+        )
+        
+        # Initialize with the box as child
         super().__init__(
-            child=Widget.Box(
-                child=[
-                    Widget.Icon(
-                        image=item.bind("icon"),
-                        pixel_size=24
-                        ),
-                    ]
-                ),
+            child=self._box,
             tooltip_text=item.bind("tooltip"),
             on_click=self._on_click,
-            on_right_click=self._on_right_click,
+            on_right_click=self._on_right_click if item.menu else None,
             css_classes=["tray-item"]
-            ),
+        )
+        
         self._is_setup = False 
     
     async def setup(self):
@@ -73,13 +123,29 @@ class TrayItem(Widget.Button):
         self._is_setup = True
 
     def _on_removed(self, _):
+        # Clean up when the item is removed
+        if self._icon.get_parent():
+            self._icon.unparent()
+        
+        if self._menu and self._menu.get_parent():
+            self._menu.unparent()
+        
+        if self._box.get_parent():
+            self._box.unparent()
+            
+        # Finally unparent self
         self.unparent()
 
     def _on_click(self, _):
-        self.item.activate()
-
+        # Use async version of activate
+        asyncio.create_task(self.item.activate_async())
+    
     def _on_right_click(self, _):
+        """
+        Handle right-click events by showing the menu.
+        """
         if self._menu:
+            # Since the menu is already in the same container, we can just call popup()
             self._menu.popup()
 
 class Tray(Widget.Box):
@@ -104,12 +170,17 @@ class Tray(Widget.Box):
         system_tray.connect("added", self._on_item_added)
         self._is_setup = True
 
-    def __port_init__(self):
+    def __post_init__(self):
         asyncio.create_task(self.setup())
 
     def clear_tray_items(self):
+        # Properly clean up each item before removing
         for item_widget in self._tray_items:
-            item_widget.unparent()
+            # Ensure proper cleanup of each item
+            if hasattr(item_widget, "_on_removed"):
+                item_widget._on_removed(None)
+            else:
+                item_widget.unparent()
         self._tray_items.clear()
 
     def _on_item_added(self, service, item: SystemTrayItem):
@@ -126,3 +197,48 @@ class Tray(Widget.Box):
         await tray_item_widget.setup()
         self.append(tray_item_widget)
         self._tray_items.append(tray_item_widget)
+
+def _show_menu_safely(menu, parent_widget, x=0, y=0):
+    """
+    Safely show a menu with proper GTK4 widget state management.
+    
+    Args:
+        menu: The menu to show
+        parent_widget: The widget that will be the parent of the menu
+        x: X coordinate for the menu
+        y: Y coordinate for the menu
+    """
+    if not menu:
+        return
+    
+    # Ensure any previous parent relationship is cleaned up
+    if menu.get_parent() and menu.get_parent() != parent_widget:
+        menu.unparent()
+        
+    # Set the parent if needed
+    if not menu.get_parent():
+        menu.set_parent(parent_widget)
+    
+    # Use a GLib idle callback to ensure the menu is shown after the current event is processed
+    def show_menu_idle():
+        # Check if the widget is still valid and has a root
+        if parent_widget.get_root():
+            # Position the menu at the pointer or specified coordinates
+            if x > 0 and y > 0:
+                # Create a rectangle for positioning
+                rect = Gdk.Rectangle()
+                rect.x = x
+                rect.y = y
+                rect.width = 1
+                rect.height = 1
+                
+                # Show the menu at the specified position
+                menu.set_pointing_to(rect)
+                menu.popup()
+            else:
+                # Just show the menu
+                menu.popup()
+        return False  # Remove the idle callback
+    
+    # Schedule the menu popup for the next idle time
+    GLib.idle_add(show_menu_idle)
