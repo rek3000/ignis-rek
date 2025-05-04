@@ -32,16 +32,25 @@ class Workspaces(Widget.EventBox):
             self.hyprland.connect("notify::workspaces", lambda *_: self.update())
             # Listen for monitor changes which can affect active workspaces
             self.hyprland.connect("notify::monitors", lambda *_: self.update())
+            # Listen for special workspace changes
+            for monitor in self.hyprland.monitors:
+                monitor.connect("notify::special-workspace-id", lambda *_: self.update())
+                monitor.connect("notify::special-workspace-name", lambda *_: self.update())
         elif self.niri.is_available:
             self.niri.connect("notify::workspaces", lambda *_: self.update())
     
     def _create_workspace_box(self) -> Widget.Box:
         """Create the main workspace container with appropriate bindings."""
         if self.hyprland.is_available:
-            return self.hyprland.bind(
+            box = self.hyprland.bind(
                 "workspaces",
                 transform=lambda value: [self._create_workspace_button(i) for i in value]
             )
+            
+            # Add special workspaces if they exist
+            self._add_special_workspaces(box)
+            
+            return box
         elif self.niri.is_available:
             return self.niri.bind(
                 "workspaces",
@@ -53,6 +62,47 @@ class Workspaces(Widget.EventBox):
             )
         else:
             return Widget.Box()
+            
+    def _add_special_workspaces(self, box: Widget.Box) -> None:
+        """Add special workspace buttons to the workspace box."""
+        if not self.hyprland.is_available:
+            return
+            
+        # Check each monitor for special workspaces
+        for monitor in self.hyprland.monitors:
+            if monitor.special_workspace_id and monitor.special_workspace_name:
+                # Create a special workspace button
+                special_button = self._create_special_workspace_button(
+                    monitor.special_workspace_id, 
+                    monitor.special_workspace_name,
+                    monitor.name
+                )
+                box.append(special_button)
+                
+    def _create_special_workspace_button(self, workspace_id: str, workspace_name: str, monitor_name: str) -> Widget.Button:
+        """Create a button for a special workspace."""
+        # Create a container box for the workspace label and monitor indicator
+        container = Widget.Box(
+            spacing=2,
+            css_classes=["workspace-container", "special-workspace"]
+        )
+        
+        # Use a special label for special workspaces
+        label_text = f"S:{workspace_name}" if workspace_name else "S"
+        container.append(Widget.Label(label=label_text))
+        
+        # Add monitor indicator
+        monitor_indicator = Widget.Label(
+            label=str(monitor_name),
+            css_classes=["monitor-indicator", "minimal"]
+        )
+        container.append(monitor_indicator)
+        
+        return Widget.Button(
+            css_classes=["workspace", "special"],
+            on_click=lambda x: self.hyprland.send_command(f"dispatch togglespecialworkspace {workspace_name}"),
+            child=container
+        )
     
     def _create_workspace_button(self, workspace: dict) -> Widget.Button:
         """Create a button for a single workspace."""
@@ -72,7 +122,8 @@ class Workspaces(Widget.EventBox):
         )
         
         # Add workspace number label
-        container.append(Widget.Label(label=str(workspace.id)))
+        workspace_id = workspace.id if hasattr(workspace, 'id') else ''
+        container.append(Widget.Label(label=str(workspace_id)))
         
         # Add monitor indicator if monitor information is available
         if hasattr(workspace, "monitor"):
@@ -84,7 +135,7 @@ class Workspaces(Widget.EventBox):
         
         return Widget.Button(
             css_classes=["workspace"],
-            on_click=lambda x, id=workspace.id: 
+            on_click=lambda x, id=workspace_id: 
                 self.hyprland.switch_to_workspace(id),
             child=container
         )
@@ -129,11 +180,17 @@ class Workspaces(Widget.EventBox):
         
         # Get the currently active workspace ID
         active_workspace_id = None
+        active_special_workspace = False
         
         if self.hyprland.is_available:
             # For Hyprland, get the active workspace ID directly from the service
             if hasattr(self.hyprland, 'active_workspace'):
                 active_workspace_id = getattr(self.hyprland.active_workspace, 'id', None)
+            
+            # Check if any monitor has an active special workspace
+            for monitor in self.hyprland.monitors:
+                if monitor.special_workspace_id and monitor.focused:
+                    active_special_workspace = True
             
         elif self.niri.is_available:
             # For Niri, find the active workspace on the current monitor
@@ -150,6 +207,17 @@ class Workspaces(Widget.EventBox):
         # Update active class for each workspace button
         for button in workspace_box:
             if not isinstance(button, Widget.Button):
+                continue
+                
+            # Check if this is a special workspace button
+            is_special = "special" in button.css_classes
+            
+            # Handle special workspaces differently
+            if is_special:
+                if active_special_workspace:
+                    button.add_css_class("active")
+                else:
+                    button.remove_css_class("active")
                 continue
                 
             # Get workspace ID from the button's label
