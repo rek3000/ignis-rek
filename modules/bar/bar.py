@@ -1,4 +1,5 @@
 import datetime
+import asyncio
 from ignis.widgets import Widget
 from ignis.utils import Utils
 from ignis.services.notifications import NotificationService
@@ -99,12 +100,18 @@ def center() -> Widget.Box:
     )
 
 
-def right() -> Widget.Box:
+async def right() -> Widget.Box:
+    battery_widget = Battery()
+    await battery_widget.setup()
+
+    tray_widget = Tray()
+    await tray_widget.setup()
+
     return Widget.Box(
         child=[
-            price_tracker(),
-            Tray(),
-            Battery(),
+            # price_tracker(),
+            tray_widget,
+            battery_widget,
             Volume(),
             VolumeSlider(),
             NotificationIcon(),
@@ -119,7 +126,9 @@ class Bar(Widget.Window):
     __gtype_name__ = "Bar"
 
     def __init__(self, monitor_id: int = 0):
-        self.monitor_name = Utils.get_monitor(monitor_id).get_connector()  # type: ignore
+        self.monitor_id = monitor_id
+        self.monitor_name = None
+
         super().__init__(
             namespace=f"ignis_bar_{monitor_id}",
             monitor=monitor_id,
@@ -127,8 +136,17 @@ class Bar(Widget.Window):
             exclusivity="exclusive",
             child=Widget.CenterBox(
                 css_classes=["bar"],
-                start_widget=left(self.monitor_name),
-                center_widget=center(),
-                end_widget=right(),
+                start_widget=None,
+                center_widget=None,
+                end_widget=None,
             ),
         )
+    async def setup(self):
+        self.monitor_name = Utils.get_monitor(self.monitor_id).get_connector()  # type: ignore
+        start_widget = left(self.monitor_name)
+        center_widget = center()
+        end_widget = await right()
+
+        self.child.start_widget = start_widget
+        self.child.center_widget = center_widget
+        self.child.end_widget = end_widget

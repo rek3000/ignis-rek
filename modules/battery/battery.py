@@ -1,4 +1,5 @@
 import os
+import asyncio
 from typing import Optional
 from functools import partial
 from ignis.widgets import (
@@ -17,6 +18,29 @@ class Battery(Widget.Box):
     """
     
     def __init__(self):
+        super().__init__(
+            vertical=False,
+            spacing=0,
+        )
+
+        # Create UI components first
+        self.percentage_text = Label(
+            label="",
+            justify="center",
+            wrap=True,
+            wrap_mode="word",
+        )
+        self.percentage_text.add_css_class("battery-percentage")
+        
+        self.icon_text = Label(
+            label="",
+            justify="center",
+            wrap=True,
+            wrap_mode="word",
+        )
+
+        self.icon_text.add_css_class("battery-icon")
+
         # Create performance mode menu
         self.performance_menu = Widget.PopoverMenu(
             items=[
@@ -35,25 +59,6 @@ class Battery(Widget.Box):
             ]
         )
 
-        # Create UI components first
-        self.percentage_text = Label(
-            label="",
-            justify="center",
-            wrap=True,
-            wrap_mode="word",
-            # ellipsize="end"
-        )
-        self.percentage_text.add_css_class("battery-percentage")
-        
-        self.icon_text = Label(
-            label="",
-            justify="center",
-            wrap=True,
-            wrap_mode="word",
-            # ellipsize="end"
-        )
-        self.icon_text.add_css_class("battery-icon")
-        
         # Create a button to contain everything
         self.button = Widget.Button(
             child=Widget.Box(
@@ -66,32 +71,30 @@ class Battery(Widget.Box):
             ),
             on_click=self._on_click
         )
-        
-        # Initialize parent with children
-        super().__init__(
-            vertical=False,
-            spacing=0,
-            child=[
-                self.button,
-                self.performance_menu,
-            ]
-        )
+
+        self.append(self.button)
+        self.append(self.performance_menu)
         
         # Add CSS class to the container
         self.add_css_class("battery-module")
+        self._is_setup = False
         
-        # Create poll for periodic updates
-        self._poll = Utils.Poll(30000, self._update_battery)  # 30 seconds interval
-        
+    async def setup(self):
+        if self._is_setup:
+            return
+        await self._update_battery()
+        self._is_setup = True
+
+    async def __post_init__(self):
+        await self.setup()
+
     def on_map(self):
         """Called when the widget is mapped."""
         super().on_map()
-        self._update_battery(None)  # Initial update
-        self._poll.start()
+        asyncio.create_task(self.start_periodic_updates())
         
     def on_unmap(self):
         """Called when the widget is unmapped."""
-        self._poll.stop()
         super().on_unmap()
         
     def _get_battery_icon(self, percentage: int, charging: bool) -> str:
@@ -148,17 +151,19 @@ class Battery(Widget.Box):
         """Show the performance mode menu when clicked."""
         self.performance_menu.popup()
 
-    def _update_battery(self, poll_instance=None):
+
+    async def _read_file_async(self, filename: str):
+        loop = asyncio.get_event_loop()
+        with open(filename, "r") as f:
+            content = await loop.run_in_executor(None, f.read)
+        return content.strip()
+
+    async def _update_battery(self):
         """Update the battery display."""
         try:
-            # Read battery percentage
-            with open("/sys/class/power_supply/BAT1/capacity", "r") as f:
-                percentage = int(f.read().strip())
-            
-            # Read charging status
-            with open("/sys/class/power_supply/BAT1/status", "r") as f:
-                status = f.read().strip()
-            
+            percentage = int(await self._read_file_async("/sys/class/power_supply/BAT1/capacity"))
+            status = await self._read_file_async("/sys/class/power_supply/BAT1/status")
+            charging = status == "Charging"
             charging = status == "Charging"
             
             # Update icon and percentage
@@ -179,3 +184,8 @@ class Battery(Widget.Box):
             print(f"Error updating battery: {e}")
             self.icon_text.label = ""  # battery error icon
             self.percentage_text.label = "Error" 
+
+    async def start_periodic_updates(self):
+        while True:
+            await self._update_battery()
+            await asyncio.sleep(30)  # 30 seconds interval

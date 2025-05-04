@@ -3,6 +3,7 @@ from ignis.widgets import Widget
 from ignis.utils import Utils
 from ignis.app import IgnisApp
 from ignis.services.notifications import NotificationService
+import asyncio
 # from ignis.services.mpris import MprisService, MprisPlayer
 
 from modules import (
@@ -22,4 +23,4 @@ for i in range(Utils.get_n_monitors()):
     NotificationPopup(i)
 
 for i in range(Utils.get_n_monitors()):
-    Bar(i)
+    asyncio.create_task(Bar(i).setup())
