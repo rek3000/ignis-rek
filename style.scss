@@ -92,6 +92,19 @@ $b-width: 0.2rem;
   }
 }
 
+.workspace.special {
+  background-color: #9b59b6;
+  color: #ffffff;
+  font-weight: bold;
+  border: 0px solid #9b59b6;
+  text-transform: uppercase;
+}
+
+.workspace.non-clickable:hover {
+  background-color: #9b59b6;
+  cursor: default;
+}
+
 .system-tray {
   padding: 0.2rem 0.2rem;
   border-radius: $b-radius;
