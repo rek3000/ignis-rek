@@ -26,7 +26,12 @@ class Workspaces(Widget.EventBox):
         
         # Set up workspace change signals
         if self.hyprland.is_available:
+            # Listen for active workspace changes
             self.hyprland.connect("notify::active-workspace", lambda *_: self.update())
+            # Also listen for workspace list changes (added/removed workspaces)
+            self.hyprland.connect("notify::workspaces", lambda *_: self.update())
+            # Listen for monitor changes which can affect active workspaces
+            self.hyprland.connect("notify::monitors", lambda *_: self.update())
         elif self.niri.is_available:
             self.niri.connect("notify::workspaces", lambda *_: self.update())
     
@@ -60,20 +65,56 @@ class Workspaces(Widget.EventBox):
     
     def _create_hyprland_button(self, workspace: dict) -> Widget.Button:
         """Create a Hyprland workspace button."""
+        # Create a container box for the workspace label and monitor indicator
+        container = Widget.Box(
+            spacing=2,
+            css_classes=["workspace-container"]
+        )
+        
+        # Add workspace number label
+        container.append(Widget.Label(label=str(workspace.id)))
+        
+        # Add monitor indicator if monitor information is available
+        if hasattr(workspace, "monitor"):
+            monitor_indicator = Widget.Label(
+                label=f"·{workspace.monitor}",
+                css_classes=["monitor-indicator"]
+            )
+            container.append(monitor_indicator)
+        
         return Widget.Button(
             css_classes=["workspace"],
             on_click=lambda x, id=workspace.id: 
                 self.hyprland.switch_to_workspace(id),
-            child=Widget.Label(label=str(workspace.id))
+            child=container
         )
     
     def _create_niri_button(self, workspace: dict) -> Widget.Button:
         """Create a Niri workspace button."""
+        # Create a container box for the workspace label and monitor indicator
+        container = Widget.Box(
+            spacing=2,
+            css_classes=["workspace-container"]
+        )
+        
+        # Add workspace number label
+        container.append(Widget.Label(label=str(workspace["idx"])))
+        
+        # Add monitor indicator
+        if "output" in workspace and workspace["output"]:
+            # Extract just the monitor number or identifier
+            monitor_id = workspace["output"].split("-")[-1] if "-" in workspace["output"] else workspace["output"]
+            monitor_indicator = Widget.Label(
+                label=f"·{monitor_id}",
+                css_classes=["monitor-indicator"]
+            )
+            container.append(monitor_indicator)
+        
         return Widget.Button(
             css_classes=["workspace"],
             on_click=lambda x, id=workspace["idx"]: 
                 self.niri.switch_to_workspace(id),
-            child=Widget.Label(label=str(workspace["idx"]))
+            child=container
         )
     
     def update(self) -> None:
@@ -85,15 +126,44 @@ class Workspaces(Widget.EventBox):
         workspace_box = super().child
         if not workspace_box:
             return
+        
+        # Get the currently active workspace ID
+        active_workspace_id = None
+        
+        if self.hyprland.is_available:
+            # For Hyprland, get the active workspace ID directly from the service
+            if hasattr(self.hyprland, 'active_workspace'):
+                active_workspace_id = getattr(self.hyprland.active_workspace, 'id', None)
             
+        elif self.niri.is_available:
+            # For Niri, find the active workspace on the current monitor
+            active_workspace = next(
+                (w for w in self.niri.workspaces if 
+                 (w.get("is_active") or w.get("focused", False)) and 
+                 w.get("output") == self._monitor_name),
+                None
+            )
+            
+            if active_workspace:
+                active_workspace_id = active_workspace.get("idx")
+        
         # Update active class for each workspace button
         for button in workspace_box:
             if not isinstance(button, Widget.Button):
                 continue
                 
             # Get workspace ID from the button's label
-            label = button.child
-            if not isinstance(label, Widget.Label):
+            # The structure is now Button -> Box (container) -> Label (first child)
+            container = button.child
+            if not isinstance(container, Widget.Box):
+                continue
+                
+            # Get the first child which is the workspace label
+            for child in container:
+                if isinstance(child, Widget.Label):
+                    label = child
+                    break
+            else:
                 continue
                 
             workspace_id = label.label
@@ -105,17 +175,8 @@ class Workspaces(Widget.EventBox):
             except ValueError:
                 continue
                 
-            # Update active class based on window manager
-            if self.hyprland.is_available:
-                is_active = workspace_id == self.hyprland.active_workspace.id
-            elif self.niri.is_available:
-                active_workspace = next(
-                    (w for w in self.niri.workspaces if w["is_active"] and w["output"] == self._monitor_name),
-                    None
-                )
-                is_active = active_workspace and workspace_id == active_workspace["idx"]
-            else:
-                is_active = False
+            # Update CSS class based on whether this workspace is the active one
+            is_active = workspace_id == active_workspace_id
                 
             # Update CSS class
             if is_active:

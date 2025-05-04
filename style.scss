@@ -53,6 +53,17 @@ $b-width: 0.2rem;
   transition: all 0.3s;
 }
 
+.workspace-container {
+  margin: 0;
+  padding: 0;
+}
+
+.monitor-indicator {
+  font-size: 14px;  
+  opacity: 0.7;     
+  color: $unactive; 
+}
+
 .workspace:hover {
   background-color: lighten($bg, 10%);
 }
@@ -61,6 +72,11 @@ $b-width: 0.2rem;
   background-color: $active;
   color: $bg;
   font-weight: bold;
+  
+  .monitor-indicator {
+    color: $bg;  
+    opacity: 0.8; 
+  }
 }
 
 .system-tray {
@@ -90,10 +106,10 @@ $b-width: 0.2rem;
 }
 
 tooltip {
-  background-color: $bg-light; // Light background for notifications
+  background-color: $bg-light; 
   padding: 0.35rem;
   border-radius: $b-radius;
-  /* color: $bg-light; // Light background for notifications */
+  /* color: $bg-light; */
 }
 
 popover.menu {
@@ -197,13 +213,13 @@ popover.menu {
 
   &.battery-charging {
     .battery-icon {
-      color: #98c379; // Green color for charging
+      color: #98c379; 
     }
   }
 
   &.battery-low {
     .battery-icon {
-      color: #e06c75; // Red color for low battery
+      color: #e06c75; 
     }
   }
 
