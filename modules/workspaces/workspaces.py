@@ -23,6 +23,12 @@ class Workspaces(Widget.EventBox):
             spacing=5,
             child=self._create_workspace_box()
         )
+        
+        # Set up workspace change signals
+        if self.hyprland.is_available:
+            self.hyprland.connect("notify::active-workspace", lambda *_: self.update())
+        elif self.niri.is_available:
+            self.niri.connect("notify::workspaces", lambda *_: self.update())
     
     def _create_workspace_box(self) -> Widget.Box:
         """Create the main workspace container with appropriate bindings."""
@@ -54,31 +60,68 @@ class Workspaces(Widget.EventBox):
     
     def _create_hyprland_button(self, workspace: dict) -> Widget.Button:
         """Create a Hyprland workspace button."""
-        widget = Widget.Button(
+        return Widget.Button(
             css_classes=["workspace"],
             on_click=lambda x, id=workspace.id: 
                 self.hyprland.switch_to_workspace(id),
             child=Widget.Label(label=str(workspace.id))
         )
-        
-        if workspace.id == self.hyprland.active_workspace.id:
-            widget.add_css_class("active")
-            
-        return widget
     
     def _create_niri_button(self, workspace: dict) -> Widget.Button:
         """Create a Niri workspace button."""
-        widget = Widget.Button(
+        return Widget.Button(
             css_classes=["workspace"],
             on_click=lambda x, id=workspace["idx"]: 
                 self.niri.switch_to_workspace(id),
             child=Widget.Label(label=str(workspace["idx"]))
         )
-        
-        if workspace["is_active"]:
-            widget.add_css_class("active")
+    
+    def update(self) -> None:
+        """
+        Update the active workspace CSS class.
+        This function refreshes the workspace buttons to ensure the correct one has the 'active' class.
+        """
+        # Get all workspace buttons
+        workspace_box = super().child
+        if not workspace_box:
+            return
             
-        return widget
+        # Update active class for each workspace button
+        for button in workspace_box:
+            if not isinstance(button, Widget.Button):
+                continue
+                
+            # Get workspace ID from the button's label
+            label = button.child
+            if not isinstance(label, Widget.Label):
+                continue
+                
+            workspace_id = label.label
+            if not workspace_id:
+                continue
+                
+            try:
+                workspace_id = int(workspace_id)
+            except ValueError:
+                continue
+                
+            # Update active class based on window manager
+            if self.hyprland.is_available:
+                is_active = workspace_id == self.hyprland.active_workspace.id
+            elif self.niri.is_available:
+                active_workspace = next(
+                    (w for w in self.niri.workspaces if w["is_active"] and w["output"] == self._monitor_name),
+                    None
+                )
+                is_active = active_workspace and workspace_id == active_workspace["idx"]
+            else:
+                is_active = False
+                
+            # Update CSS class
+            if is_active:
+                button.add_css_class("active")
+            else:
+                button.remove_css_class("active")
     
     def _scroll_workspaces(self, direction: str) -> None:
         """Handle workspace scrolling."""
@@ -86,6 +129,9 @@ class Workspaces(Widget.EventBox):
             self._scroll_hyprland_workspaces(direction)
         elif self.niri.is_available:
             self._scroll_niri_workspaces(direction)
+        
+        # Update active workspace after scrolling
+        self.update()
     
     def _scroll_hyprland_workspaces(self, direction: str) -> None:
         """Handle Hyprland workspace scrolling."""
@@ -102,12 +148,15 @@ class Workspaces(Widget.EventBox):
     
     def _scroll_niri_workspaces(self, direction: str) -> None:
         """Handle Niri workspace scrolling."""
-        current = list(
-            filter(
-                lambda w: w["is_active"] and w["output"] == self._monitor_name,
-                self.niri.workspaces
-            )
-        )[0]["idx"]
+        active_workspace = next(
+            (w for w in self.niri.workspaces if w["is_active"] and w["output"] == self._monitor_name),
+            None
+        )
+        
+        if not active_workspace:
+            return
+            
+        current = active_workspace["idx"]
         
         if direction == "up":
             target = current + 1

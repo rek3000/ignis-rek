@@ -16,7 +16,9 @@ $b-radius: 0.5rem;
 $b-width: 0.2rem;
 
 .bar {
-  padding: 0.4rem 1rem;
+  padding: 0.2rem 1rem;
+  margin:0.2rem 0.2rem;
+  border-radius: $b-radius;
   background-color: $bg;
   color: $fg;
 }
@@ -58,6 +60,7 @@ $b-width: 0.2rem;
 .workspace.active {
   background-color: $active;
   color: $bg;
+  font-weight: bold;
 }
 
 .system-tray {
@@ -83,7 +86,6 @@ $b-width: 0.2rem;
 }
 
 .clock {
-  font-size: 1.1rem;
   margin-right: 0.5rem;
 }
 
@@ -166,7 +168,7 @@ popover.menu {
 // Battery module styling
 .battery-module {
   background-color: $bg;
-  padding: 0.2rem 0.5rem;
+  padding: 0.1rem 0.5rem;
   border-radius: $b-radius;
   transition: all 0.3s;
 
@@ -291,7 +293,7 @@ popover.menu {
   padding: 0.2rem;
 
   .notification-button {
-    padding: 0.4rem 0.6rem;
+    padding: 0.2rem 0.6rem;
     border-radius: $b-radius;
     transition: all 0.3s;
     background-color: $bg;
@@ -316,7 +318,7 @@ popover.menu {
   .notification-bell {
     font-family: "ANAKRON Nerd Font";
     color: $fg;
-    font-size: 1.2rem;
+    font-size: 1rem;
     margin-right: 0.4rem;
     transition: all 0.3s;
   }
