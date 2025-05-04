@@ -77,8 +77,8 @@ class Workspaces(Widget.EventBox):
         # Add monitor indicator if monitor information is available
         if hasattr(workspace, "monitor"):
             monitor_indicator = Widget.Label(
-                label=f"·{workspace.monitor}",
-                css_classes=["monitor-indicator"]
+                label=str(workspace.monitor),
+                css_classes=["monitor-indicator", "minimal"]
             )
             container.append(monitor_indicator)
         
@@ -105,8 +105,8 @@ class Workspaces(Widget.EventBox):
             # Extract just the monitor number or identifier
             monitor_id = workspace["output"].split("-")[-1] if "-" in workspace["output"] else workspace["output"]
             monitor_indicator = Widget.Label(
-                label=f"·{monitor_id}",
-                css_classes=["monitor-indicator"]
+                label=str(monitor_id),
+                css_classes=["monitor-indicator", "minimal"]
             )
             container.append(monitor_indicator)
         
