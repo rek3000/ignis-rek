@@ -41,7 +41,7 @@ class WindowTitle(Widget.Label):
         """Set up Hyprland-specific bindings."""
         self.label = self.hyprland.bind(
             "active_window",
-            transform=lambda value: value.get("title", "")
+            transform=lambda value: value.title
         )
     
     def _setup_niri_bindings(self):

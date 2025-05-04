@@ -109,7 +109,10 @@ class NormalLayout(Widget.Box):
                     child=[
                         Widget.Button(
                             child=Widget.Label(label=action.label),
-                            on_click=lambda x, action=action: action.invoke(),
+                            on_click=lambda x, action=action: (
+                                print(f"Invoking action: {action.label}"),
+                                action.invoke()
+                            ),
                             css_classes=["notification-action"],
                         )
                         for action in notification.actions
@@ -135,4 +138,3 @@ class NotificationWidget(Widget.Box):
             css_classes=["notification"],
             child=[layout],
         )
-

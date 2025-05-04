@@ -56,12 +56,12 @@ class Workspaces(Widget.EventBox):
         """Create a Hyprland workspace button."""
         widget = Widget.Button(
             css_classes=["workspace"],
-            on_click=lambda x, id=workspace["id"]: 
+            on_click=lambda x, id=workspace.id: 
                 self.hyprland.switch_to_workspace(id),
-            child=Widget.Label(label=str(workspace["id"]))
+            child=Widget.Label(label=str(workspace.id))
         )
         
-        if workspace["id"] == self.hyprland.active_workspace["id"]:
+        if workspace.id == self.hyprland.active_workspace.id:
             widget.add_css_class("active")
             
         return widget

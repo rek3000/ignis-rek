@@ -17,26 +17,26 @@ class PowerMenu(Widget.Button):
                 Widget.Separator(),
                 Widget.MenuItem(
                     label="Suspend",
-                    on_activate=partial(self._exec_command, "loginctl suspend"),
+                    on_activate=partial(self._exec_command, "systemctl suspend"),
                 ),
                 Widget.MenuItem(
                     label="Hibernate",
-                    on_activate=partial(self._exec_command, "loginctl hibernate"),
+                    on_activate=partial(self._exec_command, "systemctl hibernate"),
                 ),
                 Widget.Separator(),
                 Widget.MenuItem(
                     label="Reboot",
-                    on_activate=partial(self._exec_command, "loginctl reboot"),
+                    on_activate=partial(self._exec_command, "systemctl reboot"),
                 ),
                 Widget.MenuItem(
                     label="Shutdown",
-                    on_activate=partial(self._exec_command, "loginctl poweroff"),
+                    on_activate=partial(self._exec_command, "systemctl poweroff"),
                 ),
                 Widget.Separator(),
                 Widget.MenuItem(
                     label="Logout",
                     enabled=self.hyprland.is_available,
-                    on_activate=partial(self._exec_command, "hyprctl dispatch exit 0"),
+                    on_activate=partial(self._exec_command, "loginctl kill-session $XDG_SESSION_ID"),
                 ),
             ]
         )
@@ -57,4 +57,4 @@ class PowerMenu(Widget.Button):
         self.menu.popup()
 
     def _exec_command(self, command, _):
-        Utils.exec_sh_async(command)
+        Utils.exec_sh(command)

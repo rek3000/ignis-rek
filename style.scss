@@ -1,8 +1,8 @@
 * {
   all: unset;
   /* font-weight: normal; */
-  /* font-family: Iosevka Nerd Font; */
-  font-family: "ANAKRON Nerd Font";
+  font-family: Iosevka Nerd Font;
+  /* font-family: "ANAKRON Nerd Font"; */
   font-size: 18px;
 }
 
@@ -13,8 +13,7 @@ $fg: #f0dedf;
 $active: #ffb2bc;
 $unactive: #d7c1c3;
 $b-radius: 0.5rem;
-
-
+$b-width: 0.2rem;
 
 .bar {
   padding: 0.4rem 1rem;
@@ -24,7 +23,7 @@ $b-radius: 0.5rem;
 
 .middle-separator {
   background-color: gray;
-  padding: 0 0.03rem;
+  padding: 0 0.10rem;
 }
 
 .volume-slider trough {
@@ -227,53 +226,35 @@ popover.menu {
   }
 }
 
-.notification {
-  .notification-header {
-    margin-bottom: 0.5rem;
 
-    .notification-title {
-      font-weight: bold;
-      color: $active;
-    }
+/* ################# */
+/* # NOTIFICATION */
+/* ################# */
+.notification-summary {
+  font-weight: bold;
+  color: $active;
+}
 
-    .notification-app {
-      color: $unactive;
-      font-size: 0.9rem;
-    }
+/* .notification-header { */
+/*   margin-bottom: 0.5rem; */
+/**/
+/*   .notification-app { */
+/*     color: $unactive; */
+/*     font-size: 0.9rem; */
+/*   } */
+/**/
+/*   .notification-time { */
+/*     color: $unactive; */
+/*     font-size: 0.8rem; */
+/*     margin-left: 0.5rem; */
+/*   } */
+/* } */
 
-    .notification-time {
-      color: $unactive;
-      font-size: 0.8rem;
-      margin-left: 0.5rem;
-    }
-  }
-
-  .notification-body {
-    color: $fg;
-    font-size: 0.9rem;
-    padding: 0.2rem 0;
-  }
-
-  .notification-actions {
-    margin-top: 0.5rem;
-
-    button {
-      background-color: mix($bg, $unactive, 80%);
-      padding: 0.2rem 0.6rem;
-      border-radius: $b-radius;
-      margin-right: 0.5rem;
-      transition: all 0.3s;
-
-      &:hover {
-        background-color: mix($bg, $unactive, 60%);
-      }
-
-      &:last-child {
-        margin-right: 0;
-      }
-    }
-  }
-
+.notification-body {
+  color: $fg;
+  font-weight: bold;
+  font-size: 0.9rem;
+  padding: 0.2rem 0;
 }
 
 .notification-close {
@@ -284,6 +265,24 @@ popover.menu {
 
   &:hover {
     background-color: mix($bg, $unactive, 60%);
+  }
+}
+
+.notification-action {
+  margin-top: 0.5rem;
+  background-color: mix($bg, $unactive, 80%);
+  border-width: $b-width;
+  padding: 0.2rem 0.6rem;
+  border-radius: $b-radius;
+  margin-right: 0.5rem;
+  transition: all 0.3s;
+
+  &:hover {
+    background-color: mix($bg, $unactive, 60%);
+  }
+
+  &:last-child {
+    margin-right: 0;
   }
 }
 
@@ -395,52 +394,20 @@ popover.menu {
   &:hover {
     background-color: lighten($bg, 5%);
   }
+  .notification-close {
+    /* transition: all 0.3s; */
+    /* border-radius: $b-radius; */
+    margin-left: 0.4rem;
+    /* color: $fg; */
 
-  .notification-header {
-    margin-bottom: 0.5rem;
-
-    .notification-title {
-      font-weight: bold;
-      color: $active;
-    }
-
-    .notification-app {
-      color: $unactive;
-      font-size: 0.9rem;
-    }
-
-    .notification-time {
-      color: $unactive;
-      font-size: 0.8rem;
-      margin-left: 0.5rem;
-    }
-  }
-
-  .notification-body {
-    color: $fg;
-    padding: 0.2rem 0;
-  }
-
-  .notification-actions {
-    margin-top: 0.5rem;
-    
-    button {
-      background-color: mix($bg, $unactive, 80%);
-      padding: 0.2rem 0.6rem;
-      border-radius: $b-radius;
-      margin-right: 0.5rem;
-      transition: all 0.3s;
-
-      &:hover {
-        background-color: mix($bg, $unactive, 60%);
-      }
-
-      &:last-child {
-        margin-right: 0;
-      }
-    }
+    /* &:hover { */
+    /*   background-color: mix($bg, $unactive, 60%); */
+    /* } */
   }
 }
+
+/**/
+/**/
 
 .power-menu {
   border-radius: $b-radius;
