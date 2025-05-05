@@ -1,6 +1,9 @@
 from ignis.widgets import Widget
 from ignis.services.hyprland import HyprlandService
 from ignis.services.niri import NiriService
+import gi
+gi.require_version('GLib', '2.0')
+from gi.repository import GLib
 
 class Workspaces(Widget.EventBox):
     """
@@ -14,6 +17,10 @@ class Workspaces(Widget.EventBox):
         # Get window manager services
         self.hyprland = HyprlandService.get_default()
         self.niri = NiriService.get_default()
+        
+        # Initialize update debounce timer
+        self._update_timeout_id = None
+        self._update_delay_ms = 50  # 50ms debounce delay
         
         # Initialize parent
         super().__init__(
@@ -184,11 +191,28 @@ class Workspaces(Widget.EventBox):
         """
         Update the active workspace CSS class.
         This function refreshes the workspace buttons to ensure the correct one has the 'active' class.
+        Uses a debounce mechanism to prevent rapid consecutive updates.
         """
+        # Cancel any pending update
+        if self._update_timeout_id is not None:
+            GLib.source_remove(self._update_timeout_id)
+            self._update_timeout_id = None
+            
+        # Schedule a new update with debounce
+        self._update_timeout_id = GLib.timeout_add(self._update_delay_ms, self._do_update)
+    
+    def _do_update(self) -> bool:
+        """
+        Perform the actual workspace update.
+        Returns False to ensure the timeout doesn't repeat.
+        """
+        # Clear the timeout ID since we're now running the update
+        self._update_timeout_id = None
+        
         # Get all workspace buttons
         workspace_box = super().child
         if not workspace_box:
-            return
+            return False
         
         # Get the currently active workspace ID
         active_workspace_id = None
@@ -253,6 +277,9 @@ class Workspaces(Widget.EventBox):
                 button.add_css_class("active")
             else:
                 button.remove_css_class("active")
+                
+        # Return False to ensure the timeout doesn't repeat
+        return False
     
     def _scroll_workspaces(self, direction: str) -> None:
         """Handle workspace scrolling."""
