@@ -20,7 +20,8 @@ class Workspaces(Widget.EventBox):
         
         # Initialize update debounce timer
         self._update_timeout_id = None
-        self._update_delay_ms = 50  # 50ms debounce delay
+        self._update_delay_ms = 10  # Reduced from 50ms to 10ms for faster response
+        self._last_update_time = 0
         
         # Initialize parent
         super().__init__(
@@ -34,7 +35,7 @@ class Workspaces(Widget.EventBox):
         # Set up workspace change signals
         if self.hyprland.is_available:
             # Listen for active workspace changes
-            self.hyprland.connect("notify::active-workspace", lambda *_: self.update())
+            self.hyprland.connect("notify::active-workspace", lambda *_: self.update(immediate=True))
             # Also listen for workspace list changes (added/removed workspaces)
             self.hyprland.connect("notify::workspaces", lambda *_: self.update())
             # Listen for monitor changes which can affect active workspaces
@@ -44,7 +45,7 @@ class Workspaces(Widget.EventBox):
                 monitor.connect("notify::special-workspace-id", lambda *_: self.update())
                 monitor.connect("notify::special-workspace-name", lambda *_: self.update())
         elif self.niri.is_available:
-            self.niri.connect("notify::workspaces", lambda *_: self.update())
+            self.niri.connect("notify::workspaces", lambda *_: self.update(immediate=True))
     
     def _create_workspace_box(self) -> Widget.Box:
         """Create the main workspace container with appropriate bindings."""
@@ -155,7 +156,7 @@ class Workspaces(Widget.EventBox):
             return Widget.Button(
                 css_classes=["workspace"],
                 on_click=lambda x, id=workspace_id: 
-                    self.hyprland.switch_to_workspace(id),
+                    self._switch_workspace_and_update(id),
                 child=container
             )
     
@@ -187,12 +188,23 @@ class Workspaces(Widget.EventBox):
             child=container
         )
     
-    def update(self) -> None:
+    def update(self, immediate=False) -> None:
         """
         Update the active workspace CSS class.
         This function refreshes the workspace buttons to ensure the correct one has the 'active' class.
-        Uses a debounce mechanism to prevent rapid consecutive updates.
+        Uses an adaptive debounce mechanism to prevent rapid consecutive updates.
+        
+        Args:
+            immediate: If True, update immediately without debouncing (for direct user actions)
         """
+        # For direct user actions, update immediately
+        if immediate:
+            if self._update_timeout_id is not None:
+                GLib.source_remove(self._update_timeout_id)
+                self._update_timeout_id = None
+            self._do_update()
+            return
+            
         # Cancel any pending update
         if self._update_timeout_id is not None:
             GLib.source_remove(self._update_timeout_id)
@@ -288,8 +300,8 @@ class Workspaces(Widget.EventBox):
         elif self.niri.is_available:
             self._scroll_niri_workspaces(direction)
         
-        # Update active workspace after scrolling
-        self.update()
+        # Update active workspace after scrolling - use immediate update for user actions
+        self.update(immediate=True)
     
     def _scroll_hyprland_workspaces(self, direction: str) -> None:
         """Handle Hyprland workspace scrolling."""
@@ -322,3 +334,13 @@ class Workspaces(Widget.EventBox):
         else:
             target = current - 1
             self.niri.switch_to_workspace(target)
+
+    def _switch_workspace_and_update(self, workspace_id):
+        """Switch to workspace and immediately update UI."""
+        if self.hyprland.is_available:
+            self.hyprland.switch_to_workspace(workspace_id)
+        elif self.niri.is_available:
+            self.niri.switch_to_workspace(workspace_id)
+        
+        # Force immediate update for direct user actions
+        self.update(immediate=True)
