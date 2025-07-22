@@ -49,6 +49,8 @@ class Workspaces(Widget.EventBox):
     
     def _create_workspace_box(self) -> Widget.Box:
         """Create the main workspace container with appropriate bindings."""
+        # for workspace in self.hyprland.workspaces:
+        #     print(workspace.id)
         if self.hyprland.is_available:
             box = self.hyprland.bind(
                 "workspaces",
@@ -109,12 +111,12 @@ class Workspaces(Widget.EventBox):
     
     def _create_workspace_button(self, workspace: dict) -> Widget.Button:
         """Create a button for a single workspace."""
+        if self._monitor_name != workspace.monitor:
+            return Widget.Button()
         if self.hyprland.is_available:
             return self._create_hyprland_button(workspace)
         elif self.niri.is_available:
             return self._create_niri_button(workspace)
-        else:
-            return Widget.Button()
     
     def _create_hyprland_button(self, workspace: dict) -> Widget.Button:
         """Create a Hyprland workspace button."""
@@ -126,6 +128,7 @@ class Workspaces(Widget.EventBox):
         
         # Add workspace number label - handle special case for sticky workspaces (negative IDs)
         workspace_id = workspace.id if hasattr(workspace, 'id') else ''
+        # print("curr mor", workspace.monitor)
         
         # Check if this is a special workspace (negative ID)
         if isinstance(workspace_id, int) and workspace_id < 0:
@@ -228,6 +231,8 @@ class Workspaces(Widget.EventBox):
         
         # Get the currently active workspace ID
         active_workspace_id = None
+        for monitor in self.hyprland.monitors:
+            print("monitor", monitor.name)
         
         if self.hyprland.is_available:
             # For Hyprland, get the active workspace ID directly from the service
@@ -251,6 +256,7 @@ class Workspaces(Widget.EventBox):
             if not isinstance(button, Widget.Button):
                 continue
                 
+
             # Check if this is a special workspace button
             is_special = "special" in button.css_classes
             
