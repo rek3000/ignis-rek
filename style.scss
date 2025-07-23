@@ -3,7 +3,7 @@
   /* font-weight: normal; */
   font-family: Hurmit Nerd Font Propo;
   /* font-family: "ANAKRON Nerd Font"; */
-  font-size: 18px;
+  font-size: 14px;
 }
 
 
@@ -379,7 +379,9 @@ popover.menu {
 .notification-center {
   background-color: $bg;
   padding: 1rem;
-  min-width: 400px;
+  min-width: 200px;
+  border-radius: $b-radius;
+  border: $b-width solid $active;
 
   .notification-center-header {
     margin-bottom: 1rem;
@@ -469,6 +471,9 @@ popover.menu {
   color: $fg;
   padding: 1rem;
   min-width: 400px;
+  margin-top: 3px;
+  margin-right: 3px;
+  border-radius: $b-radius;
 
   .control-center-widget {
     background-color: $bg-light;

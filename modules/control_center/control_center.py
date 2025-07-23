@@ -31,6 +31,8 @@ class ControlCenter(Widget.RevealerWindow):
             layer="top",
             css_classes=["unset"],
             anchor=["top", "right", "bottom", "left"],
+            # margin_right = 3,
+            # margin_top = 3,
             namespace="ignis_CONTROL_CENTER",
             child=Widget.Box(
                 child=[

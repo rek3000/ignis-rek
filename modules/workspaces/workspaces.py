@@ -203,18 +203,40 @@ class Workspaces(Widget.EventBox):
         # For direct user actions, update immediately
         if immediate:
             if self._update_timeout_id is not None:
-                GLib.source_remove(self._update_timeout_id)
+                try:
+                    GLib.source_remove(self._update_timeout_id)
+                except GLib.Error:
+                    pass  # Handle case where timer ID is no longer valid
                 self._update_timeout_id = None
             self._do_update()
             return
             
         # Cancel any pending update
         if self._update_timeout_id is not None:
-            GLib.source_remove(self._update_timeout_id)
+            try:
+                GLib.source_remove(self._update_timeout_id)
+            except GLib.Error:
+                pass  # Handle case where timer ID is no longer valid
             self._update_timeout_id = None
             
         # Schedule a new update with debounce
-        self._update_timeout_id = GLib.timeout_add(self._update_delay_ms, self._do_update)
+        # Using standard timeout_add as timeout_add_full isn't available
+        self._update_timeout_id = GLib.timeout_add(
+            self._update_delay_ms, 
+            self._do_update_wrapper
+        )
+    
+    def _do_update_wrapper(self, *args) -> bool:
+        """
+        Wrapper for _do_update that catches any exceptions to prevent UI freezes.
+        Returns False to ensure the timeout doesn't repeat.
+        """
+        try:
+            return self._do_update()
+        except Exception as e:
+            print(f"Error in workspace update: {e}")
+            self._update_timeout_id = None
+            return False
     
     def _do_update(self) -> bool:
         """
@@ -231,8 +253,9 @@ class Workspaces(Widget.EventBox):
         
         # Get the currently active workspace ID
         active_workspace_id = None
-        for monitor in self.hyprland.monitors:
-            print("monitor", monitor.name)
+        # Remove debug print that could cause performance issues
+        # for monitor in self.hyprland.monitors:
+        #    print("monitor", monitor.name)
         
         if self.hyprland.is_available:
             # For Hyprland, get the active workspace ID directly from the service
@@ -343,10 +366,15 @@ class Workspaces(Widget.EventBox):
 
     def _switch_workspace_and_update(self, workspace_id):
         """Switch to workspace and immediately update UI."""
-        if self.hyprland.is_available:
-            self.hyprland.switch_to_workspace(workspace_id)
-        elif self.niri.is_available:
-            self.niri.switch_to_workspace(workspace_id)
-        
-        # Force immediate update for direct user actions
-        self.update(immediate=True)
+        try:
+            if self.hyprland.is_available:
+                self.hyprland.switch_to_workspace(workspace_id)
+            elif self.niri.is_available:
+                self.niri.switch_to_workspace(workspace_id)
+            
+            # Force immediate update for direct user actions
+            self.update(immediate=True)
+        except Exception as e:
+            print(f"Error switching workspace: {e}")
+            # Try to recover by forcing an update
+            GLib.timeout_add(100, lambda: self.update(immediate=True))
