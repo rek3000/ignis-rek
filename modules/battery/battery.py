@@ -2,13 +2,13 @@ import os
 import asyncio
 from typing import Optional
 from functools import partial
+import aiofiles
 from ignis.widgets import (
     Widget,
     Label,
     Box,
     PopoverMenu,
-    MenuItem,
-    Button
+    MenuItem, Button
 )
 from ignis.utils import Utils
 
@@ -22,6 +22,8 @@ class Battery(Widget.Box):
             vertical=False,
             spacing=0,
         )
+        self.active_profile = "balanced"
+        self._profile_loaded = False
 
         # Create UI components first
         self.percentage_text = Label(
@@ -41,22 +43,25 @@ class Battery(Widget.Box):
 
         self.icon_text.add_css_class("battery-icon")
 
+        # Create performance mode menu items
+        self.menu_items = {
+            "performance": Widget.MenuItem(
+                label="Performance",
+                on_activate=partial(self._set_power_profile, "performance"),
+            ),
+            "balanced": Widget.MenuItem(
+                label="Balanced",
+                on_activate=partial(self._set_power_profile, "balanced"),
+            ),
+            "power-saver": Widget.MenuItem(
+                label="Power Saver",
+                on_activate=partial(self._set_power_profile, "power-saver"),
+            ),
+        }
+        
         # Create performance mode menu
         self.performance_menu = Widget.PopoverMenu(
-            items=[
-                Widget.MenuItem(
-                    label="Performance",
-                    on_activate=partial(self._set_power_profile, "performance"),
-                ),
-                Widget.MenuItem(
-                    label="Balanced",
-                    on_activate=partial(self._set_power_profile, "balanced"),
-                ),
-                Widget.MenuItem(
-                    label="Power Saver",
-                    on_activate=partial(self._set_power_profile, "power-saver"),
-                ),
-            ]
+            items=list(self.menu_items.values())
         )
 
         # Create a button to contain everything
@@ -79,9 +84,54 @@ class Battery(Widget.Box):
         self.add_css_class("battery-module")
         self._is_setup = False
         
+        # Set initial menu highlighting
+        self._update_menu_highlighting()
+        
+    async def _load_power_profile(self):
+        """Load the current power profile asynchronously."""
+        if not self._profile_loaded:
+            try:
+                result = await Utils.exec_sh_async("powerprofilesctl get")
+                self.active_profile = result.stdout.strip()
+                print(f"Loaded power profile: {self.active_profile}")
+                self._profile_loaded = True
+                self._update_menu_highlighting()
+            except Exception as e:
+                print(f"Error loading power profile: {e}")
+                # Keep the default "balanced" profile
+
+    def _update_menu_highlighting(self):
+        """Update menu item highlighting based on active profile."""
+        # Define the base labels
+        profile_labels = {
+            "performance": "Performance",
+            "balanced": "Balanced", 
+            "power-saver": "Power Saver"
+        }
+        
+        # Recreate menu items with updated labels
+        self.menu_items = {}
+        menu_items_list = []
+        
+        for profile, base_label in profile_labels.items():
+            # Add checkmark to active profile
+            label = f"{base_label} ✓" if profile == self.active_profile else base_label
+            
+            menu_item = Widget.MenuItem(
+                label=label,
+                on_activate=partial(self._set_power_profile, profile),
+            )
+            
+            self.menu_items[profile] = menu_item
+            menu_items_list.append(menu_item)
+        
+        # Update the menu with new items
+        self.performance_menu.items = menu_items_list
+
     async def setup(self):
         if self._is_setup:
             return
+        await self._load_power_profile()
         await self._update_battery()
         self._is_setup = True
 
@@ -143,7 +193,11 @@ class Battery(Widget.Box):
     def _set_power_profile(self, profile, _):
         """Set the power profile using powerprofilesctl."""
         try:
-            Utils.exec_sh_async(f"powerprofilesctl set {profile}")
+            asyncio.create_task(Utils.exec_sh_async(f"powerprofilesctl set {profile}"))
+            # Update the active profile and menu highlighting
+            self.active_profile = profile
+            self._update_menu_highlighting()
+            print(f"Power profile set to: {profile}")
         except Exception as e:
             print(f"Error setting power profile: {e}")
 
@@ -153,17 +207,22 @@ class Battery(Widget.Box):
 
 
     async def _read_file_async(self, filename: str):
-        loop = asyncio.get_event_loop()
-        with open(filename, "r") as f:
-            content = await loop.run_in_executor(None, f.read)
-        return content.strip()
+        """Read file content asynchronously using aiofiles."""
+        try:
+            async with aiofiles.open(filename, "r") as f:
+                content = await f.read()
+            return content.strip()
+        except FileNotFoundError:
+            return ""
+        except Exception as e:
+            print(f"Error reading file {filename}: {e}")
+            return ""
 
     async def _update_battery(self):
         """Update the battery display."""
         try:
             percentage = int(await self._read_file_async("/sys/class/power_supply/BAT1/capacity"))
             status = await self._read_file_async("/sys/class/power_supply/BAT1/status")
-            charging = status == "Charging"
             charging = status == "Charging"
             
             # Update icon and percentage

@@ -1,24 +1,26 @@
 * {
   all: unset;
-  /* font-weight: normal; */
-  font-family: Hurmit Nerd Font Propo;
+  /* font-family: Hurmit Nerd Font Propo; */
+  font-family: 'Spleen 32x64';
   /* font-family: "ANAKRON Nerd Font"; */
-  font-size: 14px;
+  font-size: 18px;
 }
 
 
 $bg: #1a1112;
 $bg-light: #261d1e;
 $fg: #f0dedf;
-$active: #ffb2bc;
+$active: #C5EBFE;
 $unactive: #d7c1c3;
 $b-radius: 0.5rem;
 $b-width: 0.2rem;
 
 .bar {
-  padding: 0.2rem 1rem;
-  margin:0.2rem 0rem 0 0rem;
-  border-radius: $b-radius $b-radius 0 0;
+  padding: 0.2rem 0.2rem;
+  margin:0.2rem 0.2rem 0.2rem 0.2rem;
+  /* margin:0.2rem 0.0rem 0.2rem 0.0rem; */
+  border-radius: $b-radius;
+  /* border-radius: $b-radius $b-radius 0 0; */
   background-color: $bg;
   color: $fg;
 }
