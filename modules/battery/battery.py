@@ -80,11 +80,9 @@ class Battery(Widget.Box):
         self.append(self.button)
         self.append(self.performance_menu)
         
-        # Add CSS class to the container
         self.add_css_class("battery-module")
         self._is_setup = False
         
-        # Set initial menu highlighting
         self._update_menu_highlighting()
         
     async def _load_power_profile(self):

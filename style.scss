@@ -484,3 +484,74 @@ popover.menu {
     margin-bottom: 1rem;
   }
 }
+
+
+// Confirmation dialog styling
+.confirmation-dialog {
+  background-color: $bg;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin: 2rem;
+  border: $b-width solid mix($bg, $unactive, 90%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  min-width: 300px;
+
+}
+
+.confirmation-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: $fg;
+
+  margin-bottom: 0.5rem;
+}
+
+.confirmation-message {
+  color: $unactive;
+
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.confirmation-buttons {
+  
+  button {
+    transition: all 0.3s;
+    border-radius: $b-radius;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    min-width: 80px;
+    
+    &:hover {
+      transform: translateY(-1px);
+    }
+  }
+}
+
+.cancel-button {
+  background-color: mix($bg, $unactive, 85%);
+  color: $fg;
+  
+  &:hover {
+    background-color: mix($bg, $unactive, 75%);
+  }
+}
+
+.confirm-button {
+  background-color: $active;
+  color: $bg;
+  font-weight: bold;
+  
+  &:hover {
+    background-color: lighten($active, 10%);
+  }
+  
+  &.destructive-action {
+    background-color: #e06c75;
+    color: white;
+    
+    &:hover {
+      background-color: lighten(#e06c75, 10%);
+    }
+  }
+}
