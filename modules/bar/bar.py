@@ -82,7 +82,7 @@ def left(monitor_name: str) -> Widget.Box:
 def center() -> Widget.Box:
     return Widget.Box(
         child=[
-            Widget.Separator(vertical=True, css_classes=["middle-separator"]),
+            # Widget.Separator(vertical=True, css_classes=["middle-separator"]),
         ],
         spacing=10,
     )
